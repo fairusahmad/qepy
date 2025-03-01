@@ -10,18 +10,19 @@ st.title("Quantum ESPRESSO Workflow with Streamlit")
 st.subheader("1️⃣ Select or Enter Working Directory")
 
 # Instructions for users
-st.write("If running locally, enter your directory path manually below.")
+st.write("Enter the full path to your working directory manually. Example:")
+st.code("C:/Users/YourName/Documents/QuantumESPRESSO", language="plaintext")
 
 # Allow user to **manually enter a folder path**
 directory = st.text_input("Enter the full path to your working directory:", value=os.getcwd())
 
-# Validate and set working directory
+# Validate the directory and set it
 if st.button("Set Directory"):
-    if os.path.isdir(directory):
+    if os.path.exists(directory) and os.path.isdir(directory):
         os.chdir(directory)
         st.success(f"✅ Working directory set to: {directory}")
     else:
-        st.error("❌ Invalid directory. Please enter a correct path.")
+        st.error("❌ Invalid directory. Please ensure the path exists and is accessible.")
 
 # Define folders inside the working directory
 folders = ["C-STO-00", "C-STO-20"]
@@ -41,7 +42,7 @@ task_options = {
     "run_potential_average": "average.x <potential_average.in> potential_average.out",
     "run_phonon": "mpirun -np 38 ph.x < ph.in > ph.out",
     "run_q2r": "mpirun -np 38 q2r.x < q2r.in > q2r.out",
-    "run_matdyn": "mpirun -np 38 matdyn.x < matdyn.in > matdyn.out",
+    "run_matdyn": "mpirun -np 38 matdyn.x < matdyn.in> matdyn.out",
     "run_plotband": "plotband.x <plotband.in> plotband.out",
 }
 
