@@ -6,23 +6,32 @@ from run import execute_calculations, get_working_directory
 # Streamlit app title
 st.title("Quantum ESPRESSO Workflow with Streamlit")
 
-# Sidebar for directory selection
-st.sidebar.header("Select Working Directory")
-directory = st.sidebar.text_input("Enter the Working Directory:", get_working_directory())
+# 1️⃣ Select Working Directory
+st.subheader("1️⃣ Select Working Directory")
+
+# Function to browse and list available folders
+def folder_selector(base_path="."):
+    folders = [f for f in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, f))]
+    return st.selectbox("Select a working directory:", ["Enter manually..."] + folders)
+
+# Allow user to enter or select a folder
+base_path = os.getcwd()
+selected_folder = folder_selector(base_path)
+directory = st.text_input("Or enter the directory manually:", os.path.join(base_path, selected_folder if selected_folder != "Enter manually..." else ""))
 
 # Set working directory
-if st.sidebar.button("Set Directory"):
+if st.button("Set Directory"):
     if os.path.isdir(directory):
         os.chdir(directory)
-        st.sidebar.success(f"Working directory set to: {directory}")
+        st.success(f"✅ Working directory set to: {directory}")
     else:
-        st.sidebar.error("Invalid directory. Please enter a valid path.")
+        st.error("❌ Invalid directory. Please enter a valid path.")
 
 # Define folders
 folders = ["C-STO-00", "C-STO-20"]
 
-# 1️⃣ Run Quantum ESPRESSO Calculations
-st.subheader("1️⃣ Run Quantum ESPRESSO Calculations")
+# 2️⃣ Run Quantum ESPRESSO Calculations
+st.subheader("2️⃣ Run Quantum ESPRESSO Calculations")
 
 # Define calculation steps with checkboxes
 task_options = {
@@ -63,8 +72,8 @@ st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
 if st.button("Run Selected Steps"):
     execute_calculations(selected_tasks, directory)
 
-# 2️⃣ Select SCF Output Files for Fermi Energy Extraction
-st.subheader("2️⃣ Select SCF Output Files for Fermi Energy Extraction")
+# 3️⃣ Select SCF Output Files for Fermi Energy Extraction
+st.subheader("3️⃣ Select SCF Output Files for Fermi Energy Extraction")
 
 # File selection function for SCF output
 def file_selector(folder_path):
@@ -90,8 +99,8 @@ if st.button("Extract Fermi Energies"):
     else:
         st.error("Please select SCF output files for all folders.")
 
-# 3️⃣ Plot Projected Density of States (PDOS)
-st.subheader("3️⃣ Plot Projected Density of States (PDOS)")
+# 4️⃣ Plot Projected Density of States (PDOS)
+st.subheader("4️⃣ Plot Projected Density of States (PDOS)")
 
 # Checkbox to enable saving as PDF
 save_pdf = st.checkbox("Save as PDF")
