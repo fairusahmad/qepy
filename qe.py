@@ -1,36 +1,32 @@
 import streamlit as st
 import os
 from fermi_dos import extract_fermi_energies, load_pdos, plot_pdos
-from run import execute_calculations, get_working_directory
+from run import execute_calculations
 
 # Streamlit app title
 st.title("Quantum ESPRESSO Workflow with Streamlit")
 
-# 1️⃣ Select Working Directory
-st.subheader("1️⃣ Select Working Directory")
+# 1️⃣ **Select or Enter Working Directory**
+st.subheader("1️⃣ Select or Enter Working Directory")
 
-# Function to browse and list available folders
-def folder_selector(base_path="."):
-    folders = [f for f in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, f))]
-    return st.selectbox("Select a working directory:", ["Enter manually..."] + folders)
+# Instructions for users
+st.write("If running locally, enter your directory path manually below.")
 
-# Allow user to enter or select a folder
-base_path = os.getcwd()
-selected_folder = folder_selector(base_path)
-directory = st.text_input("Or enter the directory manually:", os.path.join(base_path, selected_folder if selected_folder != "Enter manually..." else ""))
+# Allow user to **manually enter a folder path**
+directory = st.text_input("Enter the full path to your working directory:", value=os.getcwd())
 
-# Set working directory
+# Validate and set working directory
 if st.button("Set Directory"):
     if os.path.isdir(directory):
         os.chdir(directory)
         st.success(f"✅ Working directory set to: {directory}")
     else:
-        st.error("❌ Invalid directory. Please enter a valid path.")
+        st.error("❌ Invalid directory. Please enter a correct path.")
 
-# Define folders
+# Define folders inside the working directory
 folders = ["C-STO-00", "C-STO-20"]
 
-# 2️⃣ Run Quantum ESPRESSO Calculations
+# 2️⃣ **Run Quantum ESPRESSO Calculations**
 st.subheader("2️⃣ Run Quantum ESPRESSO Calculations")
 
 # Define calculation steps with checkboxes
@@ -49,7 +45,7 @@ task_options = {
     "run_plotband": "plotband.x <plotband.in> plotband.out",
 }
 
-# Create a dictionary to store selected tasks
+# Store selected tasks
 selected_tasks = {folder: [] for folder in folders}
 
 # Arrange folder settings in two columns
@@ -68,26 +64,17 @@ with col2:
         selected_tasks["C-STO-20"].append((checkbox, command))
 
 # Execute button
-st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
+st.markdown("<br>", unsafe_allow_html=True)  # Add spacing
 if st.button("Run Selected Steps"):
     execute_calculations(selected_tasks, directory)
 
-# 3️⃣ Select SCF Output Files for Fermi Energy Extraction
+# 3️⃣ **Select SCF Output Files for Fermi Energy Extraction**
 st.subheader("3️⃣ Select SCF Output Files for Fermi Energy Extraction")
 
-# File selection function for SCF output
+# File selection function (manual entry since Streamlit can't browse local files remotely)
 def file_selector(folder_path):
-    if os.path.isdir(folder_path):
-        filenames = [f for f in os.listdir(folder_path) if f.endswith('.txt') or f.endswith('.out')]
-        if filenames:
-            selected_filename = st.selectbox(f"Select SCF file for {os.path.basename(folder_path)}", filenames)
-            return os.path.join(folder_path, selected_filename)
-        else:
-            st.warning(f"No SCF files found in {folder_path}")
-            return None
-    else:
-        st.error(f"Folder {folder_path} does not exist.")
-        return None
+    st.write(f"Enter the full path to the SCF output file for `{os.path.basename(folder_path)}`")
+    return st.text_input(f"SCF file path for `{os.path.basename(folder_path)}`", value="")
 
 # User selects SCF files for Fermi energy extraction
 selected_scf_files = {folder: file_selector(os.path.join(directory, folder)) for folder in folders}
@@ -97,9 +84,9 @@ if st.button("Extract Fermi Energies"):
     if all(selected_scf_files.values()):
         fermi_energies = extract_fermi_energies(selected_scf_files)
     else:
-        st.error("Please select SCF output files for all folders.")
+        st.error("❌ Please enter valid SCF file paths for all folders.")
 
-# 4️⃣ Plot Projected Density of States (PDOS)
+# 4️⃣ **Plot Projected Density of States (PDOS)**
 st.subheader("4️⃣ Plot Projected Density of States (PDOS)")
 
 # Checkbox to enable saving as PDF
@@ -114,4 +101,4 @@ if st.button("Generate PDOS Plot"):
             df2 = load_pdos(directory, "C-STO-20", fermi_energies.get("C-STO-20"))
             plot_pdos(df1, df2, "C-STO-00", "C-STO-20", directory, save_pdf=save_pdf)
     else:
-        st.error("Please select SCF output files before plotting PDOS.")
+        st.error("❌ Please enter valid SCF file paths before plotting PDOS.")
